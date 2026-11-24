@@ -17,6 +17,152 @@ function normalizeAr(s) {
     .toLowerCase();
 }
 
+/* ---------- التقدم والنقاط والشارات ---------- */
+const STORE_KEY = "t4k-progress-v1";
+function loadProg() {
+  try {
+    const p = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (p && typeof p === "object") return p;
+  } catch (e) {}
+  return { points: 0, lessons: {}, badges: [] };
+}
+function saveProg(p) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(p)); } catch (e) {}
+}
+function lesProg(p, slug) {
+  if (!p.lessons[slug]) p.lessons[slug] = { quizBest: 0, examBest: 0, matchDone: false, flashDone: false, quizDone: false, examDone: false };
+  return p.lessons[slug];
+}
+function addBadge(p, id, name) {
+  if (!p.badges.some((b) => b.id === id)) p.badges.push({ id, name });
+}
+const LEVELS = [
+  { at: 0, name: "مبتدئ" },
+  { at: 100, name: "مجتهد" },
+  { at: 250, name: "متفوق" },
+  { at: 450, name: "بطل المنهج" },
+];
+function levelOf(points) {
+  let l = LEVELS[0];
+  for (const x of LEVELS) if (points >= x.at) l = x;
+  return l;
+}
+function nextLevel(points) {
+  for (const x of LEVELS) if (points < x.at) return x;
+  return null;
+}
+function doneCount(p) {
+  return LESSONS.filter((l) => {
+    const x = p.lessons[l.slug];
+    return x && x.quizDone;
+  }).length;
+}
+function lessonBySlug(slug) {
+  return LESSONS.find((l) => l.slug === slug);
+}
+function awardQuiz(slug, score, total) {
+  const p = loadProg();
+  const lp = lesProg(p, slug);
+  const l = lessonBySlug(slug);
+  if (score > (lp.quizBest || 0)) {
+    p.points += (score - (lp.quizBest || 0)) * 10;
+    lp.quizBest = score;
+  }
+  if (score / total >= 0.8 && !lp.quizDone) {
+    lp.quizDone = true;
+    addBadge(p, "lesson-" + slug, "بطل الدرس " + l.num + " " + String.fromCodePoint(0x1f3c5));
+  }
+  if (doneCount(p) === LESSONS.length) addBadge(p, "all", "بطل المنهج كله " + String.fromCodePoint(0x1f3c6));
+  saveProg(p);
+}
+function awardExam(slug, score, total) {
+  const p = loadProg();
+  const lp = lesProg(p, slug);
+  const l = lessonBySlug(slug);
+  if (score > (lp.examBest || 0)) {
+    p.points += (score - (lp.examBest || 0)) * 15;
+    lp.examBest = score;
+  }
+  if (score / total >= 0.6 && !lp.examDone) {
+    lp.examDone = true;
+    addBadge(p, "exam-" + slug, "ناجح في امتحان الدرس " + l.num + " " + String.fromCodePoint(0x1f393));
+  }
+  saveProg(p);
+}
+function awardOnce(slug, key, pts) {
+  const p = loadProg();
+  const lp = lesProg(p, slug);
+  if (!lp[key]) {
+    lp[key] = true;
+    p.points += pts;
+    saveProg(p);
+  }
+}
+function progCardHTML() {
+  const p = loadProg();
+  const lvl = levelOf(p.points);
+  const nxt = nextLevel(p.points);
+  const pct = nxt ? Math.min(100, Math.round(((p.points - lvl.at) / (nxt.at - lvl.at)) * 100)) : 100;
+  const done = doneCount(p);
+  return `<div class="progcard">
+    <div class="progrow">
+      <span class="chip points-chip">${String.fromCodePoint(0x2b50)} ${p.points} نقطة</span>
+      <span class="chip level-chip">المستوى: ${lvl.name}</span>
+      <span class="chip done-chip">خلصت ${done} من ${LESSONS.length} دروس</span>
+    </div>
+    <div class="pbar big"><span style="width:${pct}%"></span></div>
+    <p class="progress">${nxt ? "فاضل " + (nxt.at - p.points) + " نقطة لمستوى «" + nxt.name + "»" : "وصلت لأعلى مستوى، برافو!"}</p>
+    ${p.badges.length ? `<div class="badges">${p.badges.map((b) => `<span class="badge">${esc(b.name)}</span>`).join("")}</div>` : `<p class="progress">كمّل اختبار أي درس بـ 80% أو أكتر علشان تكسب أول شارة</p>`}
+  </div>`;
+}
+function shareHTML() {
+  return `<div class="group">
+    <div class="group-label">شارك الموقع</div>
+    <div class="sharebox">
+      <img class="qr" src="photos/qr-site.png" alt="كود QR للموقع">
+      <div class="shareside">
+        <p>ابعت الموقع لزمايلك بضغطة، أو خليهم يصوّروا الكود ده بالموبايل.</p>
+        <button type="button" class="btn" id="share-btn">شارك الموقع</button>
+        <button type="button" class="btn ghost small" id="copy-btn">انسخ اللينك</button>
+      </div>
+    </div>
+    <p class="progress" id="share-msg"></p>
+  </div>`;
+}
+function initShare() {
+  const url = location.href.split("#")[0];
+  const msg = document.getElementById("share-msg");
+  const sb = document.getElementById("share-btn");
+  const cb = document.getElementById("copy-btn");
+  if (sb) sb.onclick = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: "دروس البرمجة والذكاء الاصطناعي", url }); } catch (e) {}
+    } else if (navigator.clipboard) {
+      try { await navigator.clipboard.writeText(url); msg.textContent = "اللينك اتنسخ، ابعته لزمايلك"; } catch (e) { msg.textContent = url; }
+    } else { msg.textContent = url; }
+  };
+  if (cb) cb.onclick = async () => {
+    try { await navigator.clipboard.writeText(url); msg.textContent = "اللينك اتنسخ، ابعته لزمايلك"; }
+    catch (e) { msg.textContent = url; }
+  };
+}
+function episodesHTML() {
+  return `<div class="group">
+    <div class="group-label">الحلقات</div>
+    <p style="margin-bottom:12px; font-size:14.5px;">كل حلقات شرح المنهج على قناة Tech for Kids. اتفرج على الحلقة من هنا، واشتراكك في القناة بيوصلك كل حلقة جديدة أول ما تنزل.</p>
+    <div class="episodes">${LESSONS.map((l) => `
+      <div class="epcard">
+        <img src="${l.photo}" alt="${esc(l.photoAlt)}">
+        <div class="epbody">
+          <p class="eptitle">الدرس ${l.num} | ${esc(l.title)}</p>
+          <a class="btn red small" href="${l.video}" target="_blank" rel="noopener">اتفرج على الحلقة</a>
+        </div>
+      </div>`).join("")}
+    </div>
+    <a class="btn blue" href="${PLAYLIST}" target="_blank" rel="noopener" style="margin-top:10px;">قائمة تشغيل كل الدروس</a>
+  </div>`;
+}
+
 function subCTA() {
   return `<div class="sub">
     <p>اشترك في القناة عشان توصلك كل حلقة جديدة أول ما تنزل</p>
@@ -25,21 +171,29 @@ function subCTA() {
 }
 
 function closing() {
-  return `<div class="closing">فكرة وإعداد: مهندس اسامه حسن عسس. الصفحة دي مرجعك لكل دروس المنهج: أي درس جديد بينزل بيتضاف هنا على نفس اللينك.</div>`;
+  return `<div class="closing">فكرة وإعداد: مهندس اسامه حسن عسس. الصفحة دي مرجعك لكل دروس المنهج: أي درس جديد بينزل بيتضاف هنا على نفس اللينك.</div>
+  <div class="visits">عدد زيارات الموقع: <img src="https://hits.dwyl.com/osama010/tech-for-kids-1sec.svg?style=flat-square&color=7c3aed" alt="عدد الزيارات" loading="lazy"></div>`;
 }
 
 /* ---------- Home ---------- */
 function renderHome() {
-  const cards = LESSONS.map((l) => `
+  const prog = loadProg();
+  const cards = LESSONS.map((l) => {
+    const lp = prog.lessons[l.slug] || {};
+    const doneMark = lp.quizDone ? `<span class="donemark">خلصت الدرس ده ✓</span>` : "";
+    const best = lp.quizBest ? `<span class="best">أحسن نتيجة: ${lp.quizBest}/${l.quiz.length}</span>` : "";
+    return `
     <a class="bigcard" href="#/lesson/${l.slug}">
       <img src="${l.photo}" alt="${esc(l.photoAlt)}">
       <span class="body">
         <span class="unit">${esc(l.unit)}</span>
         <span class="title">الدرس ${l.num} | ${esc(l.title)}</span>
         <span class="detail">${l.flashcards.length} بطاقات + لعبة توصيل + ${l.quiz.length} سؤال بأفكار مختلفة</span>
+        ${doneMark}${best}
         <span class="cta">ابدأ الدرس</span>
       </span>
-    </a>`).join("");
+    </a>`;
+  }).join("");
 
   app.innerHTML = `
     <div class="hdr">
@@ -47,6 +201,7 @@ function renderHome() {
       <div class="fact">${LESSONS.length} دروس متاحة دلوقتي</div>
       <p class="intro">اختار درس من الكروت اللي تحت وابدأ على طول. كل درس فيه حلقة الشرح وبطاقات مصطلحات ولعبة توصيل واختبار كبير بأفكار أسئلة مختلفة.</p>
     </div>
+    ${progCardHTML()}
     <div class="group">
       <div class="group-label">عن المهندس</div>
       <div class="about">
@@ -72,13 +227,11 @@ function renderHome() {
       </div>
     </div>
     <div class="group"><div class="group-label">قبل ما تبدأ</div>${subCTA()}</div>
+    ${episodesHTML()}
     <div class="group cards">${cards}</div>
-    <div class="group">
-      <div class="group-label">القناة</div>
-      <p style="margin-bottom:12px; font-size:14.5px;">كل الحلقات موجودة في قائمة تشغيل واحدة على قناة Tech for Kids على يوتيوب، واشتراكك في القناة بيوصلك كل حلقة جديدة أول ما تنزل.</p>
-      <a class="btn blue" href="${PLAYLIST}" target="_blank" rel="noopener">قائمة تشغيل كل الدروس</a>
-    </div>
+    ${shareHTML()}
     ${closing()}`;
+  initShare();
   const amb = document.getElementById("aboutmore-btn");
   if (amb) amb.onclick = () => {
     const f = document.getElementById("aboutfull");
@@ -150,6 +303,13 @@ function renderLesson(slug) {
     </div>
 
     <div class="group">
+      <h2>وضع الامتحان على نمط الوزارة</h2>
+      <p class="progress">محاكي امتحان بوقت محدد على نمط امتحانات الوزارة: أسئلة من الدرس من غير مساعدات، وتصحيح كامل في الآخر. جاهز تبدأ لما تكون مذاكر كويس.</p>
+      <a class="btn red" href="#/exam/${l.slug}">ابدأ محاكي الامتحان</a>
+      <p class="progress" id="exbest"></p>
+    </div>
+
+    <div class="group">
       <h2>اختبر نفسك</h2>
       <p class="progress">${l.quiz.length} سؤال بأفكار مختلفة: اختيار من متعدد وصح أو خطأ وأكمل الفراغ</p>
       <div class="gamebar">
@@ -172,6 +332,9 @@ function renderLesson(slug) {
   initMatching(l);
   initSolved(l);
   initQuiz(l);
+  const exb = document.getElementById("exbest");
+  const lp0 = loadProg().lessons[l.slug];
+  if (exb && lp0 && lp0.examBest) exb.textContent = "أحسن نتيجة في المحاكي: " + lp0.examBest + " من " + l.quiz.length;
   window.scrollTo(0, 0);
 }
 
@@ -200,6 +363,7 @@ function initFlashcards(l) {
         : n > 0
           ? `قلبت ${n} من ${l.flashcards.length} بطاقات`
           : "";
+    if (n === l.flashcards.length) awardOnce(l.slug, "flashDone", 10);
   });
 }
 
@@ -269,6 +433,7 @@ function initMatching(l) {
         selected = null;
         draw();
         if (matched.size === l.matching.length) {
+          awardOnce(l.slug, "matchDone", 15);
           doneEl.innerHTML = `<div class="score" style="margin-top:12px">
             <p>برافو! وصلت كل مصطلح بتعريفه الصح</p>
             <button type="button" class="btn" id="mretry">العبها من الأول</button>
@@ -366,6 +531,7 @@ function initQuiz(l) {
     prog.textContent = c > 0 && c < n ? `جاوبت ${c} من ${n}` : "";
     if (c === n) {
       const s = score();
+      awardQuiz(l.slug, s, n);
       if (s === n) confetti();
       doneEl.innerHTML = `<div class="score" style="margin-top:12px">
         <p>نتيجتك: ${s} من ${n} (${s * 10} نقطة)${
@@ -456,9 +622,141 @@ function initQuiz(l) {
   });
 }
 
+/* ---------- Exam mode (محاكي الوزارة) ---------- */
+let examTimer = null;
+function renderExam(slug) {
+  const l = lessonBySlug(slug);
+  if (!l) return renderHome();
+  const n = l.quiz.length;
+  const totalSec = n * 60; // دقيقة لكل سؤال
+  let left = totalSec;
+  const picks = new Array(n).fill(null); // mcq: رقم الاختيار، tf: true/false، fill: نص
+
+  app.innerHTML = `
+    <div class="topnav"><a class="btn ghost small" href="#/lesson/${l.slug}">ارجع للدرس</a></div>
+    <div class="hdr">
+      <div class="unit">محاكي الامتحان — على نمط الوزارة</div>
+      <h1>امتحان الدرس ${l.num} | ${esc(l.title)}</h1>
+      <div class="fact">${n} سؤال في ${n} دقيقة</div>
+      <p class="intro">زي امتحان الوزارة بالظبط: جاوب على كل الأسئلة من غير مساعدات، واضغط "سلّم الامتحان" قبل ما الوقت يخلص. التصحيح والدرجة هيظهروا بعد التسليم.</p>
+    </div>
+    <div class="exambar">
+      <span class="chip timer" id="timer"></span>
+      <button type="button" class="btn red small" id="submit-exam">سلّم الامتحان</button>
+    </div>
+    <div id="examq">${l.quiz.map((q, qi) => {
+      let body = "";
+      if (q.type === "mcq") {
+        body = `<div class="opts">${q.options.map((o, oi) => `<button type="button" class="opt" data-q="${qi}" data-o="${oi}">${esc(o)}</button>`).join("")}</div>`;
+      } else if (q.type === "tf") {
+        body = `<div class="tfrow">
+          <button type="button" class="opt" data-q="${qi}" data-tf="1">صح</button>
+          <button type="button" class="opt" data-q="${qi}" data-tf="0">خطأ</button>
+        </div>`;
+      } else {
+        body = `<div class="fillrow"><input type="text" placeholder="اكتب الإجابة هنا" data-fill="${qi}" aria-label="إجابة السؤال ${qi + 1}"></div>`;
+      }
+      return `<div class="q" id="eq-${qi}">
+        <span class="qtype ${q.type}">${{ mcq: "اختيار من متعدد", tf: "صح أو خطأ", fill: "أكمل الفراغ" }[q.type]}</span>
+        <p class="qtext">السؤال ${qi + 1}: ${esc(q.q)}</p>
+        ${body}
+        <div class="fill-answer" id="enote-${qi}"></div>
+      </div>`;
+    }).join("")}</div>
+    <div id="examdone"></div>`;
+
+  const timerEl = document.getElementById("timer");
+  function tick() {
+    const m = Math.floor(left / 60);
+    const s = left % 60;
+    timerEl.textContent = "الوقت المتبقي: " + m + ":" + (s < 10 ? "0" : "") + s;
+    timerEl.classList.toggle("low", left <= 60);
+    if (left <= 0) { finish(true); return; }
+    left--;
+  }
+  tick();
+  examTimer = setInterval(tick, 1000);
+
+  const wrap = document.getElementById("examq");
+  wrap.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b || b.id === "submit-exam") return;
+    const qi = +b.dataset.q;
+    if (b.dataset.o !== undefined) {
+      picks[qi] = +b.dataset.o;
+      wrap.querySelectorAll(`button[data-q="${qi}"]`).forEach((x) => x.classList.toggle("picked", +x.dataset.o === picks[qi]));
+    } else if (b.dataset.tf !== undefined) {
+      picks[qi] = b.dataset.tf === "1";
+      wrap.querySelectorAll(`button[data-q="${qi}"]`).forEach((x) => x.classList.toggle("picked", (x.dataset.tf === "1") === picks[qi]));
+    }
+  });
+
+  let done = false;
+  function finish(timeout) {
+    if (done) return;
+    done = true;
+    clearInterval(examTimer);
+    // اقرأ إجابات الفراغات
+    wrap.querySelectorAll("input[data-fill]").forEach((inp) => { picks[+inp.dataset.fill] = inp.value || ""; inp.disabled = true; });
+    wrap.querySelectorAll("button").forEach((b) => (b.disabled = true));
+    document.getElementById("submit-exam").disabled = true;
+
+    let score = 0;
+    l.quiz.forEach((q, qi) => {
+      let ok = false;
+      if (q.type === "mcq") ok = picks[qi] === q.correct;
+      else if (q.type === "tf") ok = picks[qi] === q.answer;
+      else ok = q.accept.some((a) => normalizeAr(a) === normalizeAr(String(picks[qi] || ""))) && normalizeAr(String(picks[qi] || "")) !== "";
+      if (ok) score++;
+      const note = document.getElementById("enote-" + qi);
+      const card = document.getElementById("eq-" + qi);
+      if (ok) { note.className = "fill-answer good"; note.textContent = "إجابة صحيحة ✓"; card.classList.add("ex-right"); }
+      else {
+        note.className = "fill-answer bad";
+        const right = q.type === "mcq" ? q.options[q.correct] : q.type === "tf" ? (q.answer ? "صح" : "خطأ") : q.answer;
+        note.textContent = (picks[qi] === null || picks[qi] === "" ? "مجاوبتش ✗ " : "إجابة غلط ✗ ") + "الصح: " + right;
+        card.classList.add("ex-wrong");
+      }
+    });
+
+    awardExam(l.slug, score, n);
+    const pct = Math.round((score / n) * 100);
+    const grade = pct >= 85 ? "ممتاز" : pct >= 65 ? "جيد جدًا" : pct >= 50 ? "جيد" : "محتاج تراجع الدرس تاني";
+    const d = document.getElementById("examdone");
+    d.innerHTML = `<div class="score" style="margin-top:14px">
+      <p style="font-size:18px; font-weight:800;">${timeout ? "خلص الوقت! " : ""}نتيجتك: ${score} من ${n} (${pct}%) — ${grade}</p>
+      <p class="progress">راجع التصحيح فوق: الأخضر إجاباتك الصح، والأحمر اللي محتاج تراجعه.</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a class="btn" href="#/exam/${l.slug}">أعد المحاكي</a>
+        <a class="btn ghost small" href="#/lesson/${l.slug}">ارجع للدرس</a>
+        <a class="btn ghost small" href="#/">كل الدروس</a>
+      </div>
+    </div>`;
+    d.scrollIntoView({ behavior: "smooth" });
+    if (score === n) {
+      const colors = ["#7c3aed", "#ec4899", "#22d3ee", "#f59e0b", "#22c55e"];
+      for (let i = 0; i < 60; i++) {
+        const c = document.createElement("span");
+        c.className = "confetti";
+        c.style.background = colors[i % colors.length];
+        c.style.insetInlineStart = Math.random() * 100 + "vw";
+        c.style.animationDelay = Math.random() * 0.8 + "s";
+        c.style.animationDuration = 2.2 + Math.random() * 1.6 + "s";
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 4500);
+      }
+    }
+  }
+  document.getElementById("submit-exam").onclick = () => finish(false);
+  window.scrollTo(0, 0);
+}
+
 /* ---------- Router ---------- */
 function route() {
+  if (examTimer) { clearInterval(examTimer); examTimer = null; }
   const h = location.hash || "#/";
+  const me = h.match(/^#\/exam\/(\w+)/);
+  if (me) return renderExam(me[1]);
   const m = h.match(/^#\/lesson\/(\w+)/);
   if (m) renderLesson(m[1]);
   else renderHome();
