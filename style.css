@@ -520,3 +520,17 @@ body::after { background: #ec4899; bottom: -140px; inset-inline-end: -120px; ani
   box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }
 @media (max-width: 480px) { .about { flex-direction: column; text-align: center; } }
+.skills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.skill {
+  padding: 5px 14px; border-radius: 999px; font-size: 13px; font-weight: 700;
+  background: rgba(124, 58, 237, 0.15); border: 1px solid rgba(124, 58, 237, 0.5);
+  color: #d8b4fe;
+}
+.aboutfull {
+  margin-top: 10px; padding: 14px 16px;
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: 14px; font-size: 14px; line-height: 2;
+}
+.aboutfull p { margin: 0 0 10px; }
+.aboutfull p:last-child { margin-bottom: 0; }
+.aboutfull a { color: #67e8f9; font-weight: 700; }

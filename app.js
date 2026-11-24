@@ -51,7 +51,19 @@ function renderHome() {
       <div class="group-label">عن المهندس</div>
       <div class="about">
         <img class="about-photo" src="photos/osama.jpg" alt="مهندس اسامه حسن عسس">
-        <p style="margin:0; font-size:14.5px; line-height:1.9;">مهندس اسامه حسن عسس، معيد نظم معلومات حاسوبية (CIS) بجامعة MTI، وصاحب قناة Tech for Kids على يوتيوب اللي بيشرح عليها منهج البرمجة والذكاء الاصطناعي بطريقة مبسطة بالحلقات والموقع ده. عنده خبرة عملية في البرمجة وExcel، وبياخد مساره في تحليل البيانات حاليًا.</p>
+        <p style="margin:0; font-size:14.5px; line-height:1.9;"><strong>مهندس : اسامه حسن عسس</strong><br>معيد وباحث أكاديمي في علوم الحاسب والذكاء الاصطناعي بجامعة MTI، وصاحب قناة Tech for Kids. بشرح البرمجة والذكاء الاصطناعي بأسلوب مبسط، وبشتغل على حلول تقنية بتحل مشاكل حقيقية، وعندي بحث علمي منشور في تصنيف صور تخطيط القلب بالذكاء الاصطناعي.</p>
+      </div>
+      <div class="skills">
+        <span class="skill">الذكاء الاصطناعي</span><span class="skill">تعلم الآلة</span><span class="skill">التعلم العميق</span><span class="skill">الرؤية الحاسوبية</span><span class="skill">تحليل الصور الطبية</span><span class="skill">البرمجة</span><span class="skill">Excel</span><span class="skill">التدريس الجامعي</span>
+      </div>
+      <div style="margin-top:12px;">
+        <button type="button" class="sq-btn" id="aboutmore-btn">اقرأ المزيد ⌄</button>
+        <div class="aboutfull" id="aboutfull" hidden>
+          <p>أسامة حسن عسس، معيد وباحث أكاديمي في مجال علوم الحاسب والذكاء الاصطناعي، أهتم بالبحث العلمي وتطوير الحلول التقنية التي تسهم في معالجة المشكلات الواقعية باستخدام التقنيات الحديثة.</p>
+          <p>تتركز اهتماماتي البحثية في مجالات الذكاء الاصطناعي، وتعلم الآلة، والتعلم العميق، والرؤية الحاسوبية، وتحليل الصور الطبية، مع اهتمام خاص بتوظيف هذه التقنيات في التطبيقات الطبية وتحسين دقة الأنظمة الذكية.</p>
+          <p>شاركت في إعداد ونشر بحث علمي بعنوان <a href="https://iapress.org/index.php/soic/article/view/4003/2032" target="_blank" rel="noopener">ECG Image Classification Using Hybrid Machine Learning and Deep Learning Techniques</a> في مجلة Statistics, Optimization & Information Computing (SOIC)، والذي تناول استخدام تقنيات تعلم الآلة والتعلم العميق في تصنيف صور تخطيط القلب الكهربائي.</p>
+          <p>وعلى الصعيد الأكاديمي، أهتم بالتدريس الجامعي ونقل المعرفة، ومساعدة الطلاب على تطوير مهاراتهم العلمية والعملية في مجالات البرمجة وتكنولوجيا المعلومات.</p>
+        </div>
       </div>
       <div class="contact" style="margin-top:12px;">
         <a class="btn green" href="https://wa.me/201556655614" target="_blank" rel="noopener">تواصل واتساب</a>
@@ -67,6 +79,12 @@ function renderHome() {
       <a class="btn blue" href="${PLAYLIST}" target="_blank" rel="noopener">قائمة تشغيل كل الدروس</a>
     </div>
     ${closing()}`;
+  const amb = document.getElementById("aboutmore-btn");
+  if (amb) amb.onclick = () => {
+    const f = document.getElementById("aboutfull");
+    f.hidden = !f.hidden;
+    amb.textContent = f.hidden ? "اقرأ المزيد ⌄" : "إخفاء التفاصيل ⌃";
+  };
   window.scrollTo(0, 0);
 }
 
