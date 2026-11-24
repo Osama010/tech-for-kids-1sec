@@ -54,6 +54,16 @@ function renderHome() {
       <p style="margin-bottom:12px; font-size:14.5px;">كل الحلقات موجودة في قائمة تشغيل واحدة على قناة Tech for Kids على يوتيوب، واشتراكك في القناة بيوصلك كل حلقة جديدة أول ما تنزل.</p>
       <a class="btn blue" href="${PLAYLIST}" target="_blank" rel="noopener">قائمة تشغيل كل الدروس</a>
     </div>
+    <div class="group">
+      <div class="group-label">عن المهندس</div>
+      <p style="margin-bottom:12px; font-size:14.5px; line-height:1.9;">مهندس اسامه حسن عسس، معيد نظم معلومات حاسوبية (CIS) وصاحب قناة Tech for Kids على يوتيوب. بيشرح منهج البرمجة والذكاء الاصطناعي للصف الأول الثانوي بطريقة مبسطة بالحلقات والموقع ده، وعنده خبرة في البرمجة وتحليل البيانات.</p>
+      <div class="contact">
+        <a class="btn green" href="https://wa.me/201556655614" target="_blank" rel="noopener">تواصل واتساب: 01556655614</a>
+        <a class="btn blue" href="https://www.facebook.com/OsamaAsass" target="_blank" rel="noopener">صفحة الفيسبوك</a>
+        <a class="btn red" href="https://www.youtube.com/@TechForKidsArabic" target="_blank" rel="noopener">قناة Tech for Kids على يوتيوب</a>
+        <a class="btn ghost" href="https://github.com/Osama010" target="_blank" rel="noopener">حساب جيت هاب</a>
+      </div>
+    </div>
     ${closing()}`;
   window.scrollTo(0, 0);
 }
