@@ -43,9 +43,21 @@ function renderHome() {
 
   app.innerHTML = `
     <div class="hdr">
-      <h1>دروس البرمجة والذكاء الاصطناعي - الصف الأول الثانوي</h1>
+      <h1>دروس البرمجة والذكاء الاصطناعي</h1>
       <div class="fact">${LESSONS.length} دروس متاحة دلوقتي</div>
       <p class="intro">اختار درس من الكروت اللي تحت وابدأ على طول. كل درس فيه حلقة الشرح وبطاقات مصطلحات ولعبة توصيل واختبار كبير بأفكار أسئلة مختلفة.</p>
+    </div>
+    <div class="group">
+      <div class="group-label">عن المهندس</div>
+      <div class="about">
+        <img class="about-photo" src="photos/osama.jpg" alt="مهندس اسامه حسن عسس">
+        <p style="margin:0; font-size:14.5px; line-height:1.9;">مهندس اسامه حسن عسس، معيد نظم معلومات حاسوبية (CIS) بجامعة MTI، وصاحب قناة Tech for Kids على يوتيوب اللي بيشرح عليها منهج البرمجة والذكاء الاصطناعي بطريقة مبسطة بالحلقات والموقع ده. عنده خبرة عملية في البرمجة وExcel، وبياخد مساره في تحليل البيانات حاليًا.</p>
+      </div>
+      <div class="contact" style="margin-top:12px;">
+        <a class="btn green" href="https://wa.me/201556655614" target="_blank" rel="noopener">تواصل واتساب</a>
+        <a class="btn blue" href="https://www.facebook.com/OsamaAsass" target="_blank" rel="noopener">صفحة الفيسبوك</a>
+        <a class="btn red" href="https://www.youtube.com/@TechForKidsArabic" target="_blank" rel="noopener">قناة Tech for Kids على يوتيوب</a>
+      </div>
     </div>
     <div class="group"><div class="group-label">قبل ما تبدأ</div>${subCTA()}</div>
     <div class="group cards">${cards}</div>
@@ -53,16 +65,6 @@ function renderHome() {
       <div class="group-label">القناة</div>
       <p style="margin-bottom:12px; font-size:14.5px;">كل الحلقات موجودة في قائمة تشغيل واحدة على قناة Tech for Kids على يوتيوب، واشتراكك في القناة بيوصلك كل حلقة جديدة أول ما تنزل.</p>
       <a class="btn blue" href="${PLAYLIST}" target="_blank" rel="noopener">قائمة تشغيل كل الدروس</a>
-    </div>
-    <div class="group">
-      <div class="group-label">عن المهندس</div>
-      <p style="margin-bottom:12px; font-size:14.5px; line-height:1.9;">مهندس اسامه حسن عسس، معيد نظم معلومات حاسوبية (CIS) وصاحب قناة Tech for Kids على يوتيوب. بيشرح منهج البرمجة والذكاء الاصطناعي للصف الأول الثانوي بطريقة مبسطة بالحلقات والموقع ده، وعنده خبرة في البرمجة وتحليل البيانات.</p>
-      <div class="contact">
-        <a class="btn green" href="https://wa.me/201556655614" target="_blank" rel="noopener">تواصل واتساب: 01556655614</a>
-        <a class="btn blue" href="https://www.facebook.com/OsamaAsass" target="_blank" rel="noopener">صفحة الفيسبوك</a>
-        <a class="btn red" href="https://www.youtube.com/@TechForKidsArabic" target="_blank" rel="noopener">قناة Tech for Kids على يوتيوب</a>
-        <a class="btn ghost" href="https://github.com/Osama010" target="_blank" rel="noopener">حساب جيت هاب</a>
-      </div>
     </div>
     ${closing()}`;
   window.scrollTo(0, 0);
@@ -81,7 +83,7 @@ function renderLesson(slug) {
     <div class="hdr">
       <div class="unit">${esc(l.unit)}</div>
       <h1>الدرس ${l.num} | ${esc(l.title)}</h1>
-      <div class="fact">البرمجة والذكاء الاصطناعي - الصف الأول الثانوي</div>
+      <div class="fact">البرمجة والذكاء الاصطناعي</div>
       <p class="intro">اتفرج على الحلقة، اقلب بطاقات المصطلحات، العب لعبة التوصيل، راجع التلخيص الشامل والأسئلة المحلولة، وفي الآخر اختبر نفسك.</p>
     </div>
 
