@@ -72,7 +72,7 @@ function renderLesson(slug) {
       <div class="unit">${esc(l.unit)}</div>
       <h1>الدرس ${l.num} | ${esc(l.title)}</h1>
       <div class="fact">البرمجة والذكاء الاصطناعي - الصف الأول الثانوي</div>
-      <p class="intro">اتفرج على الحلقة، اقلب بطاقات المصطلحات، العب لعبة التوصيل، راجع أهم النقط، وفي الآخر اختبر نفسك.</p>
+      <p class="intro">اتفرج على الحلقة، اقلب بطاقات المصطلحات، العب لعبة التوصيل، راجع التلخيص الشامل والأسئلة المحلولة، وفي الآخر اختبر نفسك.</p>
     </div>
 
     <div class="group">
@@ -104,6 +104,22 @@ function renderLesson(slug) {
     </div>
 
     <div class="group">
+      <h2>التلخيص الشامل للدرس</h2>
+      ${l.summary.map((sec) => `
+        <div class="sumsec">
+          <p class="sumh">${esc(sec.h)}</p>
+          <ul class="points sumlist">${sec.items.map((it) => `<li>${esc(it)}</li>`).join("")}</ul>
+        </div>`).join("")}
+    </div>
+
+    <div class="group">
+      <h2>أسئلة محلولة للمراجعة</h2>
+      <p class="progress">ذاكر الإجابات دي كويس، مختلفة عن أسئلة الاختبار التفاعلي اللي تحت</p>
+      <div id="solved"></div>
+      <p class="progress" id="sprog"></p>
+    </div>
+
+    <div class="group">
       <h2>اختبر نفسك</h2>
       <p class="progress">${l.quiz.length} سؤال بأفكار مختلفة: اختيار من متعدد وصح أو خطأ وأكمل الفراغ</p>
       <div class="gamebar">
@@ -124,6 +140,7 @@ function renderLesson(slug) {
 
   initFlashcards(l);
   initMatching(l);
+  initSolved(l);
   initQuiz(l);
   window.scrollTo(0, 0);
 }
@@ -153,6 +170,31 @@ function initFlashcards(l) {
         : n > 0
           ? `قلبت ${n} من ${l.flashcards.length} بطاقات`
           : "";
+  });
+}
+
+/* ---------- Solved questions ---------- */
+function initSolved(l) {
+  const wrap = document.getElementById("solved");
+  const prog = document.getElementById("sprog");
+  const open = l.solved.map(() => false);
+  wrap.innerHTML = l.solved.map((s, i) => `
+    <div class="sq">
+      <div class="sq-top"><span class="sq-num">س${i + 1}</span><p class="sq-q">${esc(s.q)}</p></div>
+      <button type="button" class="sq-btn" data-i="${i}">أظهر الإجابة</button>
+      <p class="sq-a" data-a="${i}" hidden>${esc(s.a)}</p>
+    </div>`).join("");
+  wrap.addEventListener("click", (e) => {
+    const b = e.target.closest(".sq-btn");
+    if (!b) return;
+    const i = +b.dataset.i;
+    open[i] = !open[i];
+    b.textContent = open[i] ? "إخفاء الإجابة" : "أظهر الإجابة";
+    wrap.querySelector(`[data-a="${i}"]`).hidden = !open[i];
+    const n = open.filter(Boolean).length;
+    if (prog) prog.textContent = n === l.solved.length
+      ? "راجعت كل الإجابات، يلا اختبر نفسك تحت"
+      : `فتحت ${n} من ${l.solved.length} إجابات`;
   });
 }
 
